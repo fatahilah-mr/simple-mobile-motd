@@ -109,8 +109,8 @@ fi
 sed -i "s/^BANNER_TEXT=.*/BANNER_TEXT=\"${CHOSEN_BANNER}\"/" "${CONFIG_DIR}/motd.conf"
 sed -i "s/^THEME=.*/THEME=\"${CHOSEN_THEME}\"/" "${CONFIG_DIR}/motd.conf"
 
-# 4. Integrate into Login System
-# Debian / Ubuntu dynamic update-motd.d
+# 4. Integrate into Login System (Avoid Duplication)
+# If system uses dynamic update-motd.d (Debian / Ubuntu):
 if [[ -d /etc/update-motd.d ]]; then
     echo -e "${C_GRAY}  → Mengintegrasikan ke /etc/update-motd.d/99-motd-fatah...${RST}"
     cat << 'RUNNER' > /etc/update-motd.d/99-motd-fatah
@@ -119,16 +119,17 @@ if [[ -d /etc/update-motd.d ]]; then
 RUNNER
     chmod +x /etc/update-motd.d/99-motd-fatah
 
-    # Disable noisy default Ubuntu/Debian MOTDs if present
-    for noisy in 10-help-text 50-motd-news 80-esm 88-esm-announce 90-updates-available; do
+    # Clean redundant profile.d hook if it exists
+    rm -f /etc/profile.d/motd-fatah.sh
+
+    # Disable noisy/conflicting default MOTDs if present
+    for noisy in 00-header 01-custom-banner 10-help-text 10-uname 50-motd-news 80-esm 88-esm-announce 90-updates-available; do
         if [[ -f "/etc/update-motd.d/${noisy}" && -x "/etc/update-motd.d/${noisy}" ]]; then
             chmod -x "/etc/update-motd.d/${noisy}" 2>/dev/null || true
         fi
     done
-fi
-
-# Universal profile.d hook (for interactive bash login sessions)
-if [[ -d /etc/profile.d ]]; then
+# Fallback for systems without update-motd.d (RHEL / CentOS / Arch / Alpine):
+elif [[ -d /etc/profile.d ]]; then
     echo -e "${C_GRAY}  → Mengintegrasikan ke /etc/profile.d/motd-fatah.sh...${RST}"
     cat << 'PROFILE' > /etc/profile.d/motd-fatah.sh
 # motd-fatah login banner
