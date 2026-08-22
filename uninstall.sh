@@ -36,9 +36,16 @@ if [[ -f "${INSTALL_DIR}/motd-fatah" ]]; then
 fi
 
 # 2. Remove MOTD hooks
-if [[ -n "$PREFIX" && -f "${PREFIX}/etc/motd.sh" ]]; then
-    echo -e "${C_GRAY}  → Removing ${PREFIX}/etc/motd.sh...${RST}"
-    rm -f "${PREFIX}/etc/motd.sh"
+if [[ -n "$PREFIX" ]]; then
+    if [[ -f "${PREFIX}/etc/motd.sh" ]]; then
+        echo -e "${C_GRAY}  → Removing ${PREFIX}/etc/motd.sh...${RST}"
+        rm -f "${PREFIX}/etc/motd.sh"
+    fi
+    for rc in "${PREFIX}/etc/zshrc" "${PREFIX}/etc/bash.bashrc"; do
+        if [[ -f "$rc" ]]; then
+            sed -i '/motd-fatah/d' "$rc"
+        fi
+    done
 fi
 
 if [[ -f /etc/update-motd.d/99-motd-fatah ]]; then

@@ -105,7 +105,7 @@ sed -i "s/^THEME=.*/THEME=\"${CHOSEN_THEME}\"/" "${CONFIG_DIR}/motd.conf"
 
 # 4. Integrate into Login System (Avoid Duplication)
 if [[ -n "$PREFIX" ]]; then
-    echo -e "${C_GRAY}  → Mengintegrasikan ke ${PREFIX}/etc/motd.sh...${RST}"
+    echo -e "${C_GRAY}  → Mengintegrasikan ke ${PREFIX}/etc/motd.sh & shell startup...${RST}"
     cat << RUNNER > "${PREFIX}/etc/motd.sh"
 #!${PREFIX}/bin/env bash
 if [ -x "${INSTALL_DIR}/motd-fatah" ]; then
@@ -114,6 +114,12 @@ fi
 RUNNER
     chmod +x "${PREFIX}/etc/motd.sh"
     rm -f "$HOME/.hushlogin" 2>/dev/null || true
+
+    for rc in "${PREFIX}/etc/zshrc" "${PREFIX}/etc/bash.bashrc"; do
+        if [[ -f "$rc" ]] && ! grep -q "motd-fatah" "$rc"; then
+            echo -e '\n# motd-fatah login banner\nif [ -x "'"${INSTALL_DIR}/motd-fatah"'" ] && [ -z "$MOTD_FATAH_SHOWN" ]; then\n    export MOTD_FATAH_SHOWN=1\n    '"${INSTALL_DIR}/motd-fatah"'\nfi' >> "$rc"
+        fi
+    done
 # If system uses dynamic update-motd.d (Debian / Ubuntu):
 elif [[ -d /etc/update-motd.d ]]; then
     echo -e "${C_GRAY}  → Mengintegrasikan ke /etc/update-motd.d/99-motd-fatah...${RST}"
