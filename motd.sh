@@ -27,6 +27,7 @@ BAR_WIDTH="${BAR_WIDTH:-auto}"
 BAR_FILLED="${BAR_FILLED:-█}"
 BAR_EMPTY="${BAR_EMPTY:-░}"
 SHOW_HEADER="${SHOW_HEADER:-true}"
+SHOW_CPU_INFO="${SHOW_CPU_INFO:-true}"
 SHOW_SYSTEM_INFO="${SHOW_SYSTEM_INFO:-true}"
 SHOW_NETWORK="${SHOW_NETWORK:-true}"
 SHOW_RESOURCES="${SHOW_RESOURCES:-true}"
@@ -232,9 +233,17 @@ print_banner() {
 
 # --- Gather System Info ---
 
-# CPU Sample 1 (Start)
-if [[ -f /proc/stat ]]; then
-    read -r _ c_u1 c_n1 c_s1 c_i1 c_w1 c_q1 c_sq1 c_st1 _ < /proc/stat
+# CPU Model & Core count
+CPU_MODEL=""
+CPU_CORES=$(nproc 2>/dev/null || grep -c ^processor /proc/cpuinfo 2>/dev/null || echo 1)
+if [[ -f /proc/cpuinfo ]]; then
+    CPU_MODEL=$(grep -m1 "model name" /proc/cpuinfo | awk -F: '{print $2}' | sed -e 's/(R)//g' -e 's/(TM)//g' -e 's/CPU //g' -e 's/Processor//g' | tr -s ' ' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+fi
+[[ -z "$CPU_MODEL" ]] && CPU_MODEL="$(uname -p 2>/dev/null || uname -m)"
+if [[ "$CPU_CORES" -gt 1 ]]; then
+    CORE_STR="${CPU_CORES} Cores"
+else
+    CORE_STR="1 Core"
 fi
 
 # OS Info
@@ -404,32 +413,6 @@ if [[ "$SHOW_UPDATES" == "true" ]]; then
     fi
 fi
 
-# --- CPU Calculation (Sample 2 & Delta) ---
-CPU_CORES=$(nproc 2>/dev/null || grep -c ^processor /proc/cpuinfo 2>/dev/null || echo 1)
-LOAD_1M=$(awk '{print $1}' /proc/loadavg 2>/dev/null || echo 0.00)
-
-CPU_USAGE=0
-if [[ -f /proc/stat && -n "${c_u1:-}" ]]; then
-    # Tiny pause if disk/network ops were instant
-    sleep 0.08
-    read -r _ c_u2 c_n2 c_s2 c_i2 c_w2 c_q2 c_sq2 c_st2 _ < /proc/stat
-    
-    prev_idle=$(( ${c_i1:-0} + ${c_w1:-0} ))
-    idle=$(( ${c_i2:-0} + ${c_w2:-0} ))
-    
-    prev_total=$(( ${c_u1:-0} + ${c_n1:-0} + ${c_s1:-0} + ${c_i1:-0} + ${c_w1:-0} + ${c_q1:-0} + ${c_sq1:-0} + ${c_st1:-0} ))
-    total=$(( ${c_u2:-0} + ${c_n2:-0} + ${c_s2:-0} + ${c_i2:-0} + ${c_w2:-0} + ${c_q2:-0} + ${c_sq2:-0} + ${c_st2:-0} ))
-    
-    diff_idle=$(( idle - prev_idle ))
-    diff_total=$(( total - prev_total ))
-    
-    if [[ $diff_total -gt 0 ]]; then
-        CPU_USAGE=$(( (100 * (diff_total - diff_idle)) / diff_total ))
-    fi
-fi
-[[ $CPU_USAGE -gt 100 ]] && CPU_USAGE=100
-[[ $CPU_USAGE -lt 0 ]] && CPU_USAGE=0
-
 
 # ==============================================================================
 # RENDER OUTPUT
@@ -445,6 +428,9 @@ fi
 
 # 2. System & Network Info
 if [[ "$SHOW_SYSTEM_INFO" == "true" || "$SHOW_NETWORK" == "true" ]]; then
+    if [[ "$SHOW_CPU_INFO" == "true" && -n "$CPU_MODEL" ]]; then
+        printf " ${C_PRI}✦${RST} ${C_LABEL}CPU     :${RST} %s ${C_GRAY}(%s)${RST}\n" "$CPU_MODEL" "$CORE_STR"
+    fi
     printf " ${C_PRI}✦${RST} ${C_LABEL}Kernel  :${RST} %s (%s)\n" "$KERNEL_VER" "$ARCH"
     printf " ${C_PRI}✦${RST} ${C_LABEL}Uptime  :${RST} %s ${C_GRAY}|${RST} ${C_LABEL}User(s):${RST} %s\n" "$UPTIME_STR" "$USER_COUNT"
     
@@ -466,12 +452,8 @@ if [[ "$SHOW_SYSTEM_INFO" == "true" || "$SHOW_NETWORK" == "true" ]]; then
     draw_divider
 fi
 
-# 3. Resources (CPU, RAM, SWAP, DISK)
+# 3. Resources (RAM, SWAP, DISK)
 if [[ "$SHOW_RESOURCES" == "true" ]]; then
-    # CPU
-    CPU_BAR=$(render_bar "$CPU_USAGE")
-    printf " ${C_LABEL}%-4s${RST} %s ${BOLD}%4s${RST}  ${C_GRAY}(%s Core, load: %s)${RST}\n" "CPU" "$CPU_BAR" "${CPU_USAGE}%" "$CPU_CORES" "$LOAD_1M"
-    
     # RAM
     RAM_BAR=$(render_bar "$MEM_PERCENT")
     printf " ${C_LABEL}%-4s${RST} %s ${BOLD}%4s${RST}  %s / %s\n" "RAM" "$RAM_BAR" "${MEM_PERCENT}%" "$MEM_USED_STR" "$MEM_TOTAL_STR"
