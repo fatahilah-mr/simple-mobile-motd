@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/data/data/com.termux/files/usr/bin/env bash
 # ==============================================================================
 # motd-fatah - Mobile-Friendly Responsive Linux MOTD
 # GitHub: https://github.com/fatahilah-mr/simple-mobile-motd
@@ -8,12 +8,15 @@
 set -o pipefail 2>/dev/null || true
 
 # --- Load Configuration ---
-CONFIG_FILE="/etc/motd-fatah/motd.conf"
+CONFIG_FILE="${PREFIX:-}/etc/motd-fatah/motd.conf"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)"
 
 if [[ -f "$CONFIG_FILE" ]]; then
     # shellcheck source=/dev/null
     source "$CONFIG_FILE"
+elif [[ -f "/etc/motd-fatah/motd.conf" ]]; then
+    # shellcheck source=/dev/null
+    source "/etc/motd-fatah/motd.conf"
 elif [[ -f "${SCRIPT_DIR}/motd.conf" ]]; then
     # shellcheck source=/dev/null
     source "${SCRIPT_DIR}/motd.conf"
@@ -238,8 +241,17 @@ CPU_MODEL=""
 CPU_CORES=$(nproc 2>/dev/null || grep -c ^processor /proc/cpuinfo 2>/dev/null || echo 1)
 if [[ -f /proc/cpuinfo ]]; then
     CPU_MODEL=$(grep -m1 "model name" /proc/cpuinfo | awk -F: '{print $2}' | sed -e 's/(R)//g' -e 's/(TM)//g' -e 's/CPU //g' -e 's/Processor//g' | tr -s ' ' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+    if [[ -z "$CPU_MODEL" ]]; then
+        CPU_MODEL=$(grep -m1 -i "^Hardware" /proc/cpuinfo | awk -F: '{print $2}' | tr -s ' ' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+    fi
+    if [[ -z "$CPU_MODEL" ]]; then
+        CPU_MODEL=$(grep -m1 -i "^Processor" /proc/cpuinfo | awk -F: '{print $2}' | tr -s ' ' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+    fi
 fi
-[[ -z "$CPU_MODEL" ]] && CPU_MODEL="$(uname -p 2>/dev/null || uname -m)"
+if [[ -z "$CPU_MODEL" ]] && command -v getprop &>/dev/null; then
+    CPU_MODEL=$(getprop ro.soc.model 2>/dev/null || getprop ro.product.board 2>/dev/null || echo "")
+fi
+[[ -z "$CPU_MODEL" || "$CPU_MODEL" == "unknown" ]] && CPU_MODEL="$(uname -p 2>/dev/null || uname -m)"
 if [[ "$CPU_CORES" -gt 1 ]]; then
     CORE_STR="${CPU_CORES} Cores"
 else
@@ -251,8 +263,19 @@ if [[ -f /etc/os-release ]]; then
     # shellcheck source=/dev/null
     source /etc/os-release
     OS_NAME="${PRETTY_NAME:-$NAME}"
+elif [[ -f "${PREFIX:-}/etc/os-release" ]]; then
+    # shellcheck source=/dev/null
+    source "${PREFIX:-}/etc/os-release"
+    OS_NAME="${PRETTY_NAME:-$NAME}"
 else
     OS_NAME="$(uname -s)"
+fi
+if [[ -n "${TERMUX_VERSION:-}" || -d "/data/data/com.termux" ]] && [[ "$OS_NAME" == "Linux" || -z "$OS_NAME" ]]; then
+    if [[ -n "${TERMUX_VERSION:-}" ]]; then
+        OS_NAME="Termux v${TERMUX_VERSION}"
+    else
+        OS_NAME="Termux (Android)"
+    fi
 fi
 KERNEL_VER="$(uname -r)"
 ARCH="$(uname -m)"
@@ -365,7 +388,7 @@ fi
 # Public IP (Cached for 1 hour or Fast Lookup)
 PUBLIC_IP=""
 if [[ "$PUBLIC_IP_TIMEOUT" -gt 0 ]]; then
-    IP_CACHE="/tmp/.motd_public_ip"
+    IP_CACHE="${TMPDIR:-/tmp}/.motd_public_ip"
     CACHE_VALID=false
     if [[ -f "$IP_CACHE" ]]; then
         CACHE_AGE=$(( $(date +%s) - $(stat -c %Y "$IP_CACHE" 2>/dev/null || echo 0) ))
@@ -379,6 +402,7 @@ if [[ "$PUBLIC_IP_TIMEOUT" -gt 0 ]]; then
         PUBLIC_IP=$(curl -s --max-time "$PUBLIC_IP_TIMEOUT" https://icanhazip.com 2>/dev/null | tr -d '[:space:]')
         [[ -z "$PUBLIC_IP" ]] && PUBLIC_IP=$(curl -s --max-time "$PUBLIC_IP_TIMEOUT" https://ifconfig.me 2>/dev/null | tr -d '[:space:]')
         if [[ -n "$PUBLIC_IP" ]]; then
+            mkdir -p "$(dirname "$IP_CACHE")" 2>/dev/null || true
             echo "$PUBLIC_IP" > "$IP_CACHE" 2>/dev/null || true
         fi
     fi

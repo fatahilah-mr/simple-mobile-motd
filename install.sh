@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/data/data/com.termux/files/usr/bin/env bash
 # ==============================================================================
 # motd-fatah Installer (Interactive & Automated)
 # GitHub: https://github.com/fatahilah-mr/simple-mobile-motd
@@ -18,8 +18,9 @@ RST="\033[0m"
 # Repository raw URL fallback for curl/pipe installs
 RAW_BASE_URL="https://raw.githubusercontent.com/fatahilah-mr/simple-mobile-motd/main"
 
-# Root check
-if [[ $EUID -ne 0 ]]; then
+# Prefix & Root check
+PREFIX="${PREFIX:-}"
+if [[ -z "$PREFIX" && $EUID -ne 0 ]]; then
     echo -e "${C_RED}[!] Error: Please run this installer as root (sudo ./install.sh)${RST}"
     exit 1
 fi
@@ -34,24 +35,16 @@ echo -e "${C_CYAN}${C_BOLD}=====================================================
 CHOSEN_BANNER="FATAH"
 CHOSEN_THEME="cyan"
 
-# Check if interactive terminal or tty is available
+# Check if interactive terminal is available
 IS_INTERACTIVE=false
-TTY_DEV=""
 if [[ -t 0 ]]; then
     IS_INTERACTIVE=true
-elif [[ -c /dev/tty ]]; then
-    IS_INTERACTIVE=true
-    TTY_DEV="/dev/tty"
 fi
 
 if [[ "$IS_INTERACTIVE" == "true" ]]; then
     # 1. Ask for Banner Text
     echo -e "${C_YELLOW}✦ Konfigurasi Banner:${RST}"
-    if [[ -n "$TTY_DEV" ]]; then
-        read -r -p "$(echo -e "${C_GRAY}  Masukkan teks banner ASCII [Default: ${C_CYAN}FATAH${C_GRAY}]: ${RST}")" USER_BANNER < "$TTY_DEV" || true
-    else
-        read -r -p "$(echo -e "${C_GRAY}  Masukkan teks banner ASCII [Default: ${C_CYAN}FATAH${C_GRAY}]: ${RST}")" USER_BANNER || true
-    fi
+    read -r -p "$(echo -e "${C_GRAY}  Masukkan teks banner ASCII [Default: ${C_CYAN}FATAH${C_GRAY}]: ${RST}")" USER_BANNER || true
     [[ -n "${USER_BANNER:-}" ]] && CHOSEN_BANNER="${USER_BANNER^^}"
 
     # 2. Ask for Color Theme
@@ -64,11 +57,7 @@ if [[ "$IS_INTERACTIVE" == "true" ]]; then
     echo -e "  6) \033[38;5;201mRainbow\033[0m"
     echo -e "  7) \033[1;37mMono\033[0m"
     
-    if [[ -n "$TTY_DEV" ]]; then
-        read -r -p "$(echo -e "${C_GRAY}  Pilih nomor tema [1-7, Default: 1]: ${RST}")" THEME_CHOICE < "$TTY_DEV" || true
-    else
-        read -r -p "$(echo -e "${C_GRAY}  Pilih nomor tema [1-7, Default: 1]: ${RST}")" THEME_CHOICE || true
-    fi
+    read -r -p "$(echo -e "${C_GRAY}  Pilih nomor tema [1-7, Default: 1]: ${RST}")" THEME_CHOICE || true
 
     case "${THEME_CHOICE:-1}" in
         2|green) CHOSEN_THEME="green" ;;
@@ -83,8 +72,13 @@ if [[ "$IS_INTERACTIVE" == "true" ]]; then
 fi
 
 # 1. Create Directories
-INSTALL_DIR="/usr/local/bin"
-CONFIG_DIR="/etc/motd-fatah"
+if [[ -n "$PREFIX" ]]; then
+    INSTALL_DIR="${PREFIX}/bin"
+    CONFIG_DIR="${PREFIX}/etc/motd-fatah"
+else
+    INSTALL_DIR="/usr/local/bin"
+    CONFIG_DIR="/etc/motd-fatah"
+fi
 mkdir -p "$CONFIG_DIR" "$INSTALL_DIR"
 
 # 2. Copy or Download executable
@@ -110,8 +104,18 @@ sed -i "s/^BANNER_TEXT=.*/BANNER_TEXT=\"${CHOSEN_BANNER}\"/" "${CONFIG_DIR}/motd
 sed -i "s/^THEME=.*/THEME=\"${CHOSEN_THEME}\"/" "${CONFIG_DIR}/motd.conf"
 
 # 4. Integrate into Login System (Avoid Duplication)
+if [[ -n "$PREFIX" ]]; then
+    echo -e "${C_GRAY}  → Mengintegrasikan ke ${PREFIX}/etc/motd.sh...${RST}"
+    cat << RUNNER > "${PREFIX}/etc/motd.sh"
+#!${PREFIX}/bin/env bash
+if [ -x "${INSTALL_DIR}/motd-fatah" ]; then
+    "${INSTALL_DIR}/motd-fatah"
+fi
+RUNNER
+    chmod +x "${PREFIX}/etc/motd.sh"
+    rm -f "$HOME/.hushlogin" 2>/dev/null || true
 # If system uses dynamic update-motd.d (Debian / Ubuntu):
-if [[ -d /etc/update-motd.d ]]; then
+elif [[ -d /etc/update-motd.d ]]; then
     echo -e "${C_GRAY}  → Mengintegrasikan ke /etc/update-motd.d/99-motd-fatah...${RST}"
     cat << 'RUNNER' > /etc/update-motd.d/99-motd-fatah
 #!/usr/bin/env bash
@@ -146,4 +150,4 @@ echo -e "${C_GRAY}Konfigurasi tersimpan di: ${C_CYAN}${CONFIG_DIR}/motd.conf${RS
 echo -e "${C_GRAY}Preview MOTD saat ini:${RST}\n"
 
 # Run a preview
-/usr/local/bin/motd-fatah
+"${INSTALL_DIR}/motd-fatah"
