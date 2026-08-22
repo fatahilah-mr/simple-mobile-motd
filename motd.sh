@@ -232,6 +232,11 @@ print_banner() {
 
 # --- Gather System Info ---
 
+# CPU Sample 1 (Start)
+if [[ -f /proc/stat ]]; then
+    read -r _ c_u1 c_n1 c_s1 c_i1 c_w1 c_q1 c_sq1 c_st1 _ < /proc/stat
+fi
+
 # OS Info
 if [[ -f /etc/os-release ]]; then
     # shellcheck source=/dev/null
@@ -262,18 +267,6 @@ fi
 # Active Sessions
 USER_COUNT=$(who 2>/dev/null | wc -l | tr -d ' ')
 [[ -z "$USER_COUNT" || "$USER_COUNT" == "0" ]] && USER_COUNT="1"
-
-# --- CPU Calculation ---
-CPU_CORES=$(nproc 2>/dev/null || grep -c ^processor /proc/cpuinfo 2>/dev/null || echo 1)
-LOAD_1M=$(awk '{print $1}' /proc/loadavg 2>/dev/null || echo 0.00)
-
-# Calculate CPU utilization % based on 1m load relative to cores (max 100%)
-CPU_USAGE=$(awk -v load="$LOAD_1M" -v cores="$CPU_CORES" 'BEGIN {
-    pct = int((load / cores) * 100);
-    if (pct > 100) pct = 100;
-    if (pct < 0) pct = 0;
-    print pct;
-}')
 
 # --- Memory Calculation (/proc/meminfo) ---
 MEM_TOTAL_KB=0
@@ -341,7 +334,6 @@ DISK_PERCENT_STR=$(echo "$DISK_INFO" | awk '{print $5}' | tr -d '%')
 DISK_PERCENT=${DISK_PERCENT_STR:-0}
 
 # --- Network Calculation ---
-# LAN IP & Interface
 DEFAULT_IFACE=$(ip route 2>/dev/null | awk '/default/ {print $5; exit}')
 if [[ -n "$DEFAULT_IFACE" ]]; then
     LAN_IP=$(ip -4 addr show dev "$DEFAULT_IFACE" 2>/dev/null | awk '/inet / {print $2}' | cut -d/ -f1 | head -n1)
@@ -411,6 +403,32 @@ if [[ "$SHOW_UPDATES" == "true" ]]; then
         UPDATES_COUNT=$(cat /var/lib/apt/periodic/update-notifier-needed 2>/dev/null || echo 0)
     fi
 fi
+
+# --- CPU Calculation (Sample 2 & Delta) ---
+CPU_CORES=$(nproc 2>/dev/null || grep -c ^processor /proc/cpuinfo 2>/dev/null || echo 1)
+LOAD_1M=$(awk '{print $1}' /proc/loadavg 2>/dev/null || echo 0.00)
+
+CPU_USAGE=0
+if [[ -f /proc/stat && -n "${c_u1:-}" ]]; then
+    # Tiny pause if disk/network ops were instant
+    sleep 0.08
+    read -r _ c_u2 c_n2 c_s2 c_i2 c_w2 c_q2 c_sq2 c_st2 _ < /proc/stat
+    
+    prev_idle=$(( ${c_i1:-0} + ${c_w1:-0} ))
+    idle=$(( ${c_i2:-0} + ${c_w2:-0} ))
+    
+    prev_total=$(( ${c_u1:-0} + ${c_n1:-0} + ${c_s1:-0} + ${c_i1:-0} + ${c_w1:-0} + ${c_q1:-0} + ${c_sq1:-0} + ${c_st1:-0} ))
+    total=$(( ${c_u2:-0} + ${c_n2:-0} + ${c_s2:-0} + ${c_i2:-0} + ${c_w2:-0} + ${c_q2:-0} + ${c_sq2:-0} + ${c_st2:-0} ))
+    
+    diff_idle=$(( idle - prev_idle ))
+    diff_total=$(( total - prev_total ))
+    
+    if [[ $diff_total -gt 0 ]]; then
+        CPU_USAGE=$(( (100 * (diff_total - diff_idle)) / diff_total ))
+    fi
+fi
+[[ $CPU_USAGE -gt 100 ]] && CPU_USAGE=100
+[[ $CPU_USAGE -lt 0 ]] && CPU_USAGE=0
 
 
 # ==============================================================================
