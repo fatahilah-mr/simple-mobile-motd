@@ -56,7 +56,7 @@ Kebanyakan MOTD bawaan atau tool fetch desktop akan mengalami teks berantakan (*
   - **DISK**: Partisi root `/` (Used / Total).
 - 🌐 **Smart Network Info**: Mendeteksi IP Lokal (LAN), IP VPN (Tailscale/WireGuard), dan IP Publik (WAN) dengan caching hemat kuota/waktu.
 - 🐳 **Service & Package Updates Monitoring**: Menampilkan status servis aktif (SSH, Docker, Nginx, Tailscale, dll.) dan jumlah update paket pending.
-- 🎨 **Modular & Kustomisasi Mudah**: File konfigurasi terpisah di `/etc/motd-fatah/motd.conf`.
+- 🎨 **Installer Interaktif**: Pilih nama banner dan tema warna langsung saat instalasi.
 
 ---
 
@@ -76,17 +76,33 @@ sudo ./install.sh
 curl -sSL https://raw.githubusercontent.com/fatahilah/motd-fatah/main/install.sh | sudo bash
 ```
 
+> Saat instalasi berjalan, script akan menanyakan teks banner yang diinginkan (default: `FATAH`) dan pilihan tema warna.
+
 ---
 
-## ⚙️ Konfigurasi (`motd.conf`)
+## 📖 Panduan Penggunaan
 
-Setelah diinstal, file konfigurasi tersimpan di `/etc/motd-fatah/motd.conf`. Anda dapat mengeditnya kapan saja:
+### 1. Menampilkan MOTD Kapan Saja
+Setelah terinstall, Anda dapat memanggil perintah ini di terminal:
+```bash
+motd-fatah
+```
 
+### 2. Mengubah Konfigurasi (Teks Banner, Warna, Modul)
+File konfigurasi berada di `/etc/motd-fatah/motd.conf`. Edit dengan nano:
 ```bash
 sudo nano /etc/motd-fatah/motd.conf
 ```
 
-### Opsi yang Tersedia:
+### 3. Menguji Tampilan di Layar HP
+Untuk mensimulasikan tampilan layar sempit (lebar 38 kolom) langsung dari terminal:
+```bash
+COLUMNS=38 motd-fatah
+```
+
+---
+
+## ⚙️ Opsi Konfigurasi (`motd.conf`)
 
 | Variabel | Pilihan Nilai | Keterangan |
 | :--- | :--- | :--- |
@@ -114,16 +130,6 @@ sudo nano /etc/motd-fatah/motd.conf
 - ☀️ **Yellow**: Nuansa emas / amber.
 - 🌈 **Rainbow**: Gradasi multi-warna.
 - ⚪ **Mono**: Tampilan monokrom minimalis.
-
----
-
-## 🧪 Menguji Tampilan
-
-Jalankan perintah ini di terminal kapan saja untuk melihat preview langsung:
-
-```bash
-motd-fatah
-```
 
 ---
 
