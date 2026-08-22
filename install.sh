@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # motd-fatah Installer (Interactive & Automated)
-# GitHub: https://github.com/fatahilah/motd-fatah
+# GitHub: https://github.com/fatahilah-mr/simple-mobile-motd
 # ==============================================================================
 
 set -euo pipefail
@@ -16,7 +16,7 @@ C_BOLD="\033[1m"
 RST="\033[0m"
 
 # Repository raw URL fallback for curl/pipe installs
-RAW_BASE_URL="https://raw.githubusercontent.com/fatahilah/motd-fatah/main"
+RAW_BASE_URL="https://raw.githubusercontent.com/fatahilah-mr/simple-mobile-motd/main"
 
 # Root check
 if [[ $EUID -ne 0 ]]; then

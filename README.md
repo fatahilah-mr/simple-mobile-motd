@@ -66,7 +66,7 @@ Kebanyakan MOTD bawaan atau tool fetch desktop akan mengalami teks berantakan (*
 ### 1. Metode Git Clone (Direkomendasikan)
 
 ```bash
-git clone https://github.com/fatahilah/motd-fatah.git
+git clone https://github.com/fatahilah-mr/simple-mobile-motd.git
 cd motd-fatah
 sudo ./install.sh
 ```
@@ -74,7 +74,7 @@ sudo ./install.sh
 ### 2. Metode One-Liner (Curl / Wget)
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/fatahilah/motd-fatah/main/install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/fatahilah-mr/simple-mobile-motd/main/install.sh | sudo bash
 ```
 
 > Saat instalasi berjalan, script akan menanyakan teks banner yang diinginkan (default: `FATAH`) dan pilihan tema warna.

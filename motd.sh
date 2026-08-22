@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # motd-fatah - Mobile-Friendly Responsive Linux MOTD
-# GitHub: https://github.com/fatahilah/motd-fatah
+# GitHub: https://github.com/fatahilah-mr/simple-mobile-motd
 # ==============================================================================
 
 # Ensure bash environment & exit gracefully on error
