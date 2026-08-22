@@ -27,14 +27,14 @@ Kebanyakan MOTD bawaan atau tool fetch desktop akan mengalami teks berantakan (*
 ────────────────────────────────────────────────────
  ✦ CPU     : Intel Xeon E5-2698 v4 @ 2.20GHz (1 Core)
  ✦ Kernel  : 6.1.0-52-cloud-amd64 (x86_64)
- ✦ Uptime  : 7h 46m | User(s): 2
+ ✦ Uptime  : 7h 53m | User(s): 2
  ✦ IP LAN  : 10.2.30.119 (eth0)
  ✦ IP VPN  : 100.100.2.1 (tailscale)
  ✦ IP WAN  : 129.227.46.157
 ────────────────────────────────────────────────────
- RAM  [████░░░░░░░░░░░]  33%  662M / 1.9G
- SWAP [░░░░░░░░░░░░░░░]  <1%  3M / 511M
- DISK [██░░░░░░░░░░░░░]  18%  3.3G / 20G
+ RAM  [◆◆◆◆◆◇◇◇◇◇◇◇◇◇◇]  34%  676M / 1.9G
+ SWAP [◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇]  <1%  3M / 511M
+ DISK [◆◆◇◇◇◇◇◇◇◇◇◇◇◇◇]  18%  3.3G / 20G
 ────────────────────────────────────────────────────
  ✦ Status  : ● Ssh ● Tailscaled
  ✦ Updates : System is up to date
@@ -46,6 +46,7 @@ Kebanyakan MOTD bawaan atau tool fetch desktop akan mengalami teks berantakan (*
 ## 🚀 Fitur Unggulan
 
 - 📱 **Mobile-First & Responsive Layout**: Menyesuaikan panjang progress bar dan garis pembatas secara otomatis berdasarkan ukuran layar terminal (`tput cols`).
+- 💎 **Diamond Progress Bar (`◆` / `◇`)**: Tampilan meter elegan bergaya RPG/Fantasy modern.
 - ⚡ **Pure Bash & Ultra Fast**: Eksekusi instan tanpa dependensi runtime tambahan seperti Python, NodeJS, atau Rust.
 - 💻 **Hardware & System Info**:
   - **CPU**: Menampilkan model prosesor & jumlah core dengan format ringkas.
@@ -88,7 +89,7 @@ Setelah terinstall, Anda dapat memanggil perintah ini di terminal:
 motd-fatah
 ```
 
-### 2. Mengubah Konfigurasi (Teks Banner, Warna, Modul)
+### 2. Mengubah Konfigurasi (Teks Banner, Warna, Modul, Simbol Bar)
 File konfigurasi berada di `/etc/motd-fatah/motd.conf`. Edit dengan nano:
 ```bash
 sudo nano /etc/motd-fatah/motd.conf
@@ -108,6 +109,8 @@ COLUMNS=38 motd-fatah
 | :--- | :--- | :--- |
 | `BANNER_TEXT` | `"FATAH"`, `"LINUX"`, dll. | Teks ASCII Banner (disarankan 5–8 karakter untuk layar HP). |
 | `THEME` | `cyan`, `green`, `purple`, `blue`, `yellow`, `rainbow`, `mono` | Tema warna tampilan MOTD. |
+| `BAR_FILLED` | `"◆"`, `"█"`, `"▰"`, `"■"` | Simbol bagian bar terisi (Default: `◆`). |
+| `BAR_EMPTY` | `"◇"`, `"░"`, `"▱"`, `"□"` | Simbol bagian bar kosong (Default: `◇`). |
 | `BAR_WIDTH` | `auto`, `10`, `15`, `20` | Panjang progress bar (mode `auto` otomatis mengecil di HP). |
 | `SHOW_HEADER` | `true` / `false` | Tampilkan Banner ASCII & info OS. |
 | `SHOW_CPU_INFO` | `true` / `false` | Tampilkan Model CPU & Jumlah Core. |
