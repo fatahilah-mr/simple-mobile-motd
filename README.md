@@ -19,6 +19,21 @@
 
 Kebanyakan MOTD bawaan atau tool fetch desktop akan mengalami teks berantakan (*line-wrapping*) ketika dibuka di layar HP karena lebar terminal portrait yang sempit (~38–45 kolom). `simple-mobile-motd` secara cerdas mendeteksi lebar terminal secara *real-time* dan menyesuaikan bar visual agar tetap rapi, presisi, dan indah dipandang.
 
+## 📸 Preview / Screenshots
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center"><b>🐧 Linux Server (Debian 13)</b></td>
+      <td align="center"><b>🤖 Android (Termux)</b></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/linux-debian.jpg" width="360" alt="Linux Server Debian Preview"></td>
+      <td><img src="screenshots/android-termux.jpg" width="360" alt="Android Termux Preview"></td>
+    </tr>
+  </table>
+</div>
+
 ```text
   ╔═╗╔═╗╔╦╗╔═╗╦ ╦
   ╠╣ ╠═╣ ║ ╠═╣╠═╣
