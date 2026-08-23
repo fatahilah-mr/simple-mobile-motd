@@ -1,13 +1,13 @@
 <div align="center">
 
-# 📱 motd-fatah
+# 📱 simple-mobile-motd
 
-**A lightweight, responsive, and mobile-friendly Message of the Day (MOTD) for Linux servers.**
+**A lightweight, responsive, and mobile-friendly Message of the Day (MOTD) for Linux servers & Termux (Android).**
 
 [![Shell Script](https://img.shields.io/badge/Language-Bash%205%2B-blue.svg?style=flat-square&logo=gnu-bash&logoColor=white)](https://www.gnu.org/software/bash/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
-[![Mobile Friendly](https://img.shields.io/badge/Optimized-Mobile%20SSH-brightgreen.svg?style=flat-square)](https://github.com)
-[![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero%20(Pure%20Bash)-orange.svg?style=flat-square)](https://github.com)
+[![Platform: Linux & Termux](https://img.shields.io/badge/Platform-Linux%20%7C%20Termux-brightgreen.svg?style=flat-square)](https://github.com/fatahilah-mr/simple-mobile-motd)
+[![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero%20(Pure%20Bash)-orange.svg?style=flat-square)](https://github.com/fatahilah-mr/simple-mobile-motd)
 
 </div>
 
@@ -15,9 +15,9 @@
 
 ## ✨ Overview
 
-**`motd-fatah`** dirancang khusus untuk administrator server dan developer yang sering mengakses server melalui **smartphone (Termius, JuiceSSH, Termux, ConnectBot)** maupun desktop PC.
+**`simple-mobile-motd`** dirancang khusus untuk administrator server dan developer yang sering mengakses server melalui **smartphone (Termius, JuiceSSH, Termux, ConnectBot)** maupun desktop PC.
 
-Kebanyakan MOTD bawaan atau tool fetch desktop akan mengalami teks berantakan (*line-wrapping*) ketika dibuka di layar HP karena lebar terminal portrait yang sempit (~38–45 kolom). `motd-fatah` secara cerdas mendeteksi lebar terminal secara *real-time* dan menyesuaikan bar visual agar tetap rapi, presisi, dan indah dipandang.
+Kebanyakan MOTD bawaan atau tool fetch desktop akan mengalami teks berantakan (*line-wrapping*) ketika dibuka di layar HP karena lebar terminal portrait yang sempit (~38–45 kolom). `simple-mobile-motd` secara cerdas mendeteksi lebar terminal secara *real-time* dan menyesuaikan bar visual agar tetap rapi, presisi, dan indah dipandang.
 
 ```text
   ╔═╗╔═╗╔╦╗╔═╗╦ ╦
@@ -45,36 +45,50 @@ Kebanyakan MOTD bawaan atau tool fetch desktop akan mengalami teks berantakan (*
 
 ## 🚀 Fitur Unggulan
 
-- 📱 **Mobile-First & Responsive Layout**: Menyesuaikan panjang progress bar dan garis pembatas secara otomatis berdasarkan ukuran layar terminal (`tput cols`).
-- 💎 **Diamond Progress Bar (`◆` / `◇`)**: Tampilan meter elegan bergaya RPG/Fantasy modern.
+- 📱 **Mobile-First & Responsive**: Menyesuaikan panjang progress bar dan garis pembatas secara otomatis berdasarkan ukuran layar terminal (`tput cols`).
+- 🤖 **Universal Platform**: Kompatibel 100% di **Linux Server (Debian, Ubuntu, CentOS, Arch, Alpine, dll.)** dan **Termux (Android)**.
+- 💎 **Diamond Progress Bar (`◆` / `◇`)**: Tampilan meter elegan bergaya RPG/Modern.
 - ⚡ **Pure Bash & Ultra Fast**: Eksekusi instan tanpa dependensi runtime tambahan seperti Python, NodeJS, atau Rust.
 - 💻 **Hardware & System Info**:
-  - **CPU**: Menampilkan model prosesor & jumlah core dengan format ringkas.
-  - **OS & Kernel**: Identitas distro, versi kernel, arsitektur, dan uptime.
+  - **CPU**: Menampilkan model prosesor / SoC Android & jumlah core dengan format ringkas.
+  - **OS & Kernel**: Identitas distro/Termux, versi kernel, arsitektur, dan uptime.
 - 📊 **Resource Progress Bars**:
   - **RAM**: Penggunaan memori real-time & kapasitas total.
   - **SWAP**: Status swap & persentase (otomatis menampilkan `<1%` atau `Off` jika tidak aktif).
-  - **DISK**: Partisi root `/` (Used / Total).
-- 🌐 **Smart Network Info**: Mendeteksi IP Lokal (LAN), IP VPN (Tailscale/WireGuard), dan IP Publik (WAN) dengan caching hemat kuota/waktu.
-- 🐳 **Service & Package Updates Monitoring**: Menampilkan status servis aktif (SSH, Docker, Nginx, Tailscale, dll.) dan jumlah update paket pending.
+  - **DISK**: Partisi root `/` (atau `/data` di Termux).
+- 🌐 **Smart Network Info**: Mendeteksi IP Lokal (LAN), IP VPN (Tailscale/WireGuard/Tun), dan IP Publik (WAN) dengan caching hemat kuota/waktu.
+- 🐳 **Service & Updates Monitoring**: Menampilkan status servis aktif (SSH, Docker, Tailscale, runit, dll.) dan update paket pending.
 - 🎨 **Installer Interaktif**: Pilih nama banner dan tema warna langsung saat instalasi.
 
 ---
 
 ## 📥 Cara Instalasi
 
-### 1. Metode Git Clone (Direkomendasikan)
+### 1. Metode One-Liner (Paling Cepat)
+
+**Di Linux Server / VPS:**
+```bash
+curl -sSL https://raw.githubusercontent.com/fatahilah-mr/simple-mobile-motd/main/install.sh | sudo bash
+```
+
+**Di Termux (Android):**
+```bash
+curl -sSL https://raw.githubusercontent.com/fatahilah-mr/simple-mobile-motd/main/install.sh | bash
+```
+
+---
+
+### 2. Metode Git Clone
 
 ```bash
 git clone https://github.com/fatahilah-mr/simple-mobile-motd.git
-cd motd-fatah
+cd simple-mobile-motd
+
+# Untuk Linux Server:
 sudo ./install.sh
-```
 
-### 2. Metode One-Liner (Curl / Wget)
-
-```bash
-curl -sSL https://raw.githubusercontent.com/fatahilah-mr/simple-mobile-motd/main/install.sh | sudo bash
+# Untuk Termux:
+./install.sh
 ```
 
 > Saat instalasi berjalan, script akan menanyakan teks banner yang diinginkan (default: `FATAH`) dan pilihan tema warna.
@@ -89,10 +103,10 @@ Setelah terinstall, Anda dapat memanggil perintah ini di terminal:
 motd-fatah
 ```
 
-### 2. Mengubah Konfigurasi (Teks Banner, Warna, Modul, Simbol Bar)
-File konfigurasi berada di `/etc/motd-fatah/motd.conf`. Edit dengan nano:
+### 2. Mengubah Konfigurasi
+File konfigurasi tersimpan di `/etc/motd-fatah/motd.conf` (atau `$PREFIX/etc/motd-fatah/motd.conf` di Termux). Edit dengan editor teks:
 ```bash
-sudo nano /etc/motd-fatah/motd.conf
+nano /etc/motd-fatah/motd.conf
 ```
 
 ### 3. Menguji Tampilan di Layar HP
@@ -120,7 +134,7 @@ COLUMNS=38 motd-fatah
 | `SHOW_SWAP` | `true` / `false` | Tampilkan status SWAP. |
 | `SHOW_SERVICES` | `true` / `false` | Tampilkan status servis (Docker, SSH, dll.). |
 | `SHOW_UPDATES` | `true` / `false` | Tampilkan status update paket OS. |
-| `MONITOR_SERVICES`| `"ssh,docker,tailscaled,nginx"` | Daftar servis systemd yang ingin dimonitor. |
+| `MONITOR_SERVICES`| `"ssh,docker,tailscaled,nginx"` | Daftar servis yang ingin dimonitor. |
 
 ---
 
@@ -141,8 +155,50 @@ COLUMNS=38 motd-fatah
 Jika ingin menghapus instalasi secara bersih:
 
 ```bash
+# Di Linux Server:
 sudo ./uninstall.sh
+
+# Di Termux:
+./uninstall.sh
 ```
+
+---
+
+## 🤝 Panduan Kontribusi (Contributing Guide)
+
+Kami sangat terbuka untuk kontribusi dari komunitas! Jika Anda ingin menambahkan fitur, tema baru, atau perbaikan bug, ikuti langkah-langkah berikut:
+
+### 1. Fork & Clone Repository
+```bash
+git clone https://github.com/<username-kamu>/simple-mobile-motd.git
+cd simple-mobile-motd
+```
+
+### 2. Buat Branch Baru dari `dev`
+Semua pengembangan fitur baru dilakukan pada branch **`dev`**:
+```bash
+git checkout -b dev origin/dev
+git checkout -b feature/nama-fitur-kamu
+```
+
+### 3. Pedoman Pengembangan (Coding Standards)
+- ⚡ **Pure Bash**: Gunakan shell script murni tanpa dependensi compiler atau runtime berat.
+- 📱 **Mobile-First (~38 Kolom)**: Pastikan setiap output teks tidak melebihi lebar 38–40 karakter agar tidak mengalami *line-wrapping* di smartphone. Uji dengan:
+  ```bash
+  COLUMNS=38 ./motd.sh
+  ```
+- 🌐 **Cross-Platform**: Pastikan perubahan tetap kompatibel baik di Linux Server biasa maupun di Termux Android (perhatikan penggunaan variable `$PREFIX` dan `$TMPDIR`).
+
+### 4. Commit & Push
+Gunakan format pesan commit yang jelas ([Conventional Commits](https://www.conventionalcommits.org/)):
+```bash
+git add .
+git commit -m "feat: menambahkan tema warna baru solarized"
+git push origin feature/nama-fitur-kamu
+```
+
+### 5. Buat Pull Request (PR)
+Buka Pull Request di GitHub dan arahkan **Base branch ke `dev`**. Tim akan mereview dan menggabungkan kontribusi Anda!
 
 ---
 
