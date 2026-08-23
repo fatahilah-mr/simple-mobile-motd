@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/env bash
+#!/usr/bin/env bash
 # ==============================================================================
 # motd-fatah Installer (Interactive & Automated)
 # GitHub: https://github.com/fatahilah-mr/simple-mobile-motd
@@ -18,7 +18,7 @@ RST="\033[0m"
 # Repository raw URL fallback for curl/pipe installs
 RAW_BASE_URL="https://raw.githubusercontent.com/fatahilah-mr/simple-mobile-motd/main"
 
-# Prefix & Root check
+# Root check (Bypass for Termux where $PREFIX is defined)
 PREFIX="${PREFIX:-}"
 if [[ -z "$PREFIX" && $EUID -ne 0 ]]; then
     echo -e "${C_RED}[!] Error: Please run this installer as root (sudo ./install.sh)${RST}"
@@ -28,23 +28,31 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
 
 echo -e "\n${C_CYAN}${C_BOLD}======================================================${RST}"
-echo -e "${C_CYAN}${C_BOLD}       📱 Installing motd-fatah (Linux MOTD)          ${RST}"
+echo -e "${C_CYAN}${C_BOLD}       📱 Installing motd-fatah (Linux & Termux)      ${RST}"
 echo -e "${C_CYAN}${C_BOLD}======================================================${RST}\n"
 
 # Interactive Configuration
 CHOSEN_BANNER="FATAH"
 CHOSEN_THEME="cyan"
 
-# Check if interactive terminal is available
+# Check if interactive terminal or tty is available
 IS_INTERACTIVE=false
+TTY_DEV=""
 if [[ -t 0 ]]; then
     IS_INTERACTIVE=true
+elif [[ -c /dev/tty ]]; then
+    IS_INTERACTIVE=true
+    TTY_DEV="/dev/tty"
 fi
 
 if [[ "$IS_INTERACTIVE" == "true" ]]; then
     # 1. Ask for Banner Text
     echo -e "${C_YELLOW}✦ Konfigurasi Banner:${RST}"
-    read -r -p "$(echo -e "${C_GRAY}  Masukkan teks banner ASCII [Default: ${C_CYAN}FATAH${C_GRAY}]: ${RST}")" USER_BANNER || true
+    if [[ -n "$TTY_DEV" ]]; then
+        read -r -p "$(echo -e "${C_GRAY}  Masukkan teks banner ASCII [Default: ${C_CYAN}FATAH${C_GRAY}]: ${RST}")" USER_BANNER < "$TTY_DEV" || true
+    else
+        read -r -p "$(echo -e "${C_GRAY}  Masukkan teks banner ASCII [Default: ${C_CYAN}FATAH${C_GRAY}]: ${RST}")" USER_BANNER || true
+    fi
     [[ -n "${USER_BANNER:-}" ]] && CHOSEN_BANNER="${USER_BANNER^^}"
 
     # 2. Ask for Color Theme
@@ -57,7 +65,11 @@ if [[ "$IS_INTERACTIVE" == "true" ]]; then
     echo -e "  6) \033[38;5;201mRainbow\033[0m"
     echo -e "  7) \033[1;37mMono\033[0m"
     
-    read -r -p "$(echo -e "${C_GRAY}  Pilih nomor tema [1-7, Default: 1]: ${RST}")" THEME_CHOICE || true
+    if [[ -n "$TTY_DEV" ]]; then
+        read -r -p "$(echo -e "${C_GRAY}  Pilih nomor tema [1-7, Default: 1]: ${RST}")" THEME_CHOICE < "$TTY_DEV" || true
+    else
+        read -r -p "$(echo -e "${C_GRAY}  Pilih nomor tema [1-7, Default: 1]: ${RST}")" THEME_CHOICE || true
+    fi
 
     case "${THEME_CHOICE:-1}" in
         2|green) CHOSEN_THEME="green" ;;
@@ -71,7 +83,7 @@ if [[ "$IS_INTERACTIVE" == "true" ]]; then
     echo ""
 fi
 
-# 1. Create Directories
+# 1. Determine Directories
 if [[ -n "$PREFIX" ]]; then
     INSTALL_DIR="${PREFIX}/bin"
     CONFIG_DIR="${PREFIX}/etc/motd-fatah"
@@ -105,9 +117,9 @@ sed -i "s/^THEME=.*/THEME=\"${CHOSEN_THEME}\"/" "${CONFIG_DIR}/motd.conf"
 
 # 4. Integrate into Login System (Avoid Duplication)
 if [[ -n "$PREFIX" ]]; then
-    echo -e "${C_GRAY}  → Mengintegrasikan ke ${PREFIX}/etc/motd.sh & shell startup...${RST}"
+    echo -e "${C_GRAY}  → Mengintegrasikan ke Termux (${PREFIX}/etc/motd.sh & shell startup)...${RST}"
     cat << RUNNER > "${PREFIX}/etc/motd.sh"
-#!${PREFIX}/bin/env bash
+#!/usr/bin/env bash
 if [ -x "${INSTALL_DIR}/motd-fatah" ]; then
     "${INSTALL_DIR}/motd-fatah"
 fi
@@ -115,9 +127,10 @@ RUNNER
     chmod +x "${PREFIX}/etc/motd.sh"
     rm -f "$HOME/.hushlogin" 2>/dev/null || true
 
+    # Shell startup hooks for Termux (tagged for clean uninstall)
     for rc in "${PREFIX}/etc/zshrc" "${PREFIX}/etc/bash.bashrc"; do
         if [[ -f "$rc" ]] && ! grep -q "motd-fatah" "$rc"; then
-            echo -e '\n# motd-fatah login banner\nif [ -x "'"${INSTALL_DIR}/motd-fatah"'" ] && [ -z "$MOTD_FATAH_SHOWN" ]; then\n    export MOTD_FATAH_SHOWN=1\n    '"${INSTALL_DIR}/motd-fatah"'\nfi' >> "$rc"
+            echo "[ -x \"${INSTALL_DIR}/motd-fatah\" ] && [ -z \"\$MOTD_FATAH_SHOWN\" ] && export MOTD_FATAH_SHOWN=1 && \"${INSTALL_DIR}/motd-fatah\" # motd-fatah" >> "$rc"
         fi
     done
 # If system uses dynamic update-motd.d (Debian / Ubuntu):

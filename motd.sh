@@ -1,6 +1,6 @@
-#!/data/data/com.termux/files/usr/bin/env bash
+#!/usr/bin/env bash
 # ==============================================================================
-# motd-fatah - Mobile-Friendly Responsive Linux MOTD
+# motd-fatah - Mobile-Friendly Responsive Linux & Termux MOTD
 # GitHub: https://github.com/fatahilah-mr/simple-mobile-motd
 # ==============================================================================
 
@@ -8,10 +8,11 @@
 set -o pipefail 2>/dev/null || true
 
 # --- Load Configuration ---
-CONFIG_FILE="${PREFIX:-}/etc/motd-fatah/motd.conf"
+PREFIX="${PREFIX:-}"
+CONFIG_FILE="${PREFIX}/etc/motd-fatah/motd.conf"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)"
 
-if [[ -f "$CONFIG_FILE" ]]; then
+if [[ -n "$CONFIG_FILE" && -f "$CONFIG_FILE" ]]; then
     # shellcheck source=/dev/null
     source "$CONFIG_FILE"
 elif [[ -f "/etc/motd-fatah/motd.conf" ]]; then
@@ -159,7 +160,6 @@ render_bar() {
 print_banner() {
     local text="${BANNER_TEXT^^}" # Uppercase
     
-    # Predefined optimized mini banners
     if [[ "$text" == "FATAH" ]]; then
         printf "${C_PRI}  ╔═╗╔═╗╔╦╗╔═╗╦ ╦\n"
         printf "${C_SEC}  ╠╣ ╠═╣ ║ ╠═╣╠═╣\n"
@@ -181,7 +181,6 @@ print_banner() {
         printf "${C_SEC}  ║ ║╠╩╗║ ║║║║ ║ ║ ║\n"
         printf "${C_ACC}  ╚═╝╚═╝╚═╝╝╚╝ ╩ ╚═╝\n"
     else
-        # Dynamic mini character fallback
         local line1="  "
         local line2="  "
         local line3="  "
@@ -236,16 +235,16 @@ print_banner() {
 
 # --- Gather System Info ---
 
-# CPU Model & Core count
+# CPU Model & Core count (Support Linux, Cloud VMs & Android/Termux)
 CPU_MODEL=""
 CPU_CORES=$(nproc 2>/dev/null || grep -c ^processor /proc/cpuinfo 2>/dev/null || echo 1)
 if [[ -f /proc/cpuinfo ]]; then
-    CPU_MODEL=$(grep -m1 "model name" /proc/cpuinfo | awk -F: '{print $2}' | sed -e 's/(R)//g' -e 's/(TM)//g' -e 's/CPU //g' -e 's/Processor//g' | tr -s ' ' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+    CPU_MODEL=$(grep -m1 "model name" /proc/cpuinfo 2>/dev/null | awk -F: '{print $2}' | sed -e 's/(R)//g' -e 's/(TM)//g' -e 's/CPU //g' -e 's/Processor//g' | tr -s ' ' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
     if [[ -z "$CPU_MODEL" ]]; then
-        CPU_MODEL=$(grep -m1 -i "^Hardware" /proc/cpuinfo | awk -F: '{print $2}' | tr -s ' ' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+        CPU_MODEL=$(grep -m1 -i "^Hardware" /proc/cpuinfo 2>/dev/null | awk -F: '{print $2}' | tr -s ' ' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
     fi
     if [[ -z "$CPU_MODEL" ]]; then
-        CPU_MODEL=$(grep -m1 -i "^Processor" /proc/cpuinfo | awk -F: '{print $2}' | tr -s ' ' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+        CPU_MODEL=$(grep -m1 -i "^Processor" /proc/cpuinfo 2>/dev/null | awk -F: '{print $2}' | tr -s ' ' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
     fi
 fi
 if [[ -z "$CPU_MODEL" ]] && command -v getprop &>/dev/null; then
@@ -259,17 +258,17 @@ else
 fi
 
 # OS Info
+OS_NAME=""
 if [[ -f /etc/os-release ]]; then
     # shellcheck source=/dev/null
     source /etc/os-release
     OS_NAME="${PRETTY_NAME:-$NAME}"
-elif [[ -f "${PREFIX:-}/etc/os-release" ]]; then
+elif [[ -n "$PREFIX" && -f "${PREFIX}/etc/os-release" ]]; then
     # shellcheck source=/dev/null
-    source "${PREFIX:-}/etc/os-release"
+    source "${PREFIX}/etc/os-release"
     OS_NAME="${PRETTY_NAME:-$NAME}"
-else
-    OS_NAME="$(uname -s)"
 fi
+
 if [[ -n "${TERMUX_VERSION:-}" || -d "/data/data/com.termux" ]] && [[ "$OS_NAME" == "Linux" || -z "$OS_NAME" ]]; then
     if [[ -n "${TERMUX_VERSION:-}" ]]; then
         OS_NAME="Termux v${TERMUX_VERSION}"
@@ -277,9 +276,11 @@ if [[ -n "${TERMUX_VERSION:-}" || -d "/data/data/com.termux" ]] && [[ "$OS_NAME"
         OS_NAME="Termux (Android)"
     fi
 fi
+[[ -z "$OS_NAME" ]] && OS_NAME="$(uname -s)"
+
 KERNEL_VER="$(uname -r)"
 ARCH="$(uname -m)"
-HOSTNAME_STR="$(hostname)"
+HOSTNAME_STR="$(hostname 2>/dev/null || echo "localhost")"
 
 # Uptime
 if [[ -f /proc/uptime ]]; then
@@ -358,8 +359,12 @@ else
     SWAP_PERCENT_DISP="Off"
 fi
 
-# --- Disk Calculation (Root /) ---
-DISK_INFO=$(df -h / 2>/dev/null | tail -1)
+# --- Disk Calculation (Root / or Termux Data) ---
+DISK_MOUNT="/"
+[[ -n "$PREFIX" ]] && DISK_MOUNT="/data"
+DISK_INFO=$(df -h "$DISK_MOUNT" 2>/dev/null | tail -1)
+[[ -z "$DISK_INFO" ]] && DISK_INFO=$(df -h / 2>/dev/null | tail -1)
+
 DISK_TOTAL=$(echo "$DISK_INFO" | awk '{print $2}')
 DISK_USED=$(echo "$DISK_INFO" | awk '{print $3}')
 DISK_PERCENT_STR=$(echo "$DISK_INFO" | awk '{print $5}' | tr -d '%')
@@ -382,6 +387,9 @@ if [[ "$SHOW_VPN" == "true" ]]; then
     elif ip link show wg0 &>/dev/null; then
         WG_IP=$(ip -4 addr show dev wg0 2>/dev/null | awk '/inet / {print $2}' | cut -d/ -f1 | head -n1)
         [[ -n "$WG_IP" ]] && VPN_INFO="${WG_IP} (wireguard)"
+    elif ip link show tun0 &>/dev/null; then
+        TUN_IP=$(ip -4 addr show dev tun0 2>/dev/null | awk '/inet / {print $2}' | cut -d/ -f1 | head -n1)
+        [[ -n "$TUN_IP" ]] && VPN_INFO="${TUN_IP} (vpn)"
     fi
 fi
 
@@ -416,12 +424,16 @@ if [[ "$SHOW_SERVICES" == "true" && -n "$MONITOR_SERVICES" ]]; then
         svc_clean=$(echo "$svc" | tr -d ' ')
         [[ -z "$svc_clean" ]] && continue
         
-        if systemctl is-active --quiet "$svc_clean" 2>/dev/null; then
+        if command -v systemctl &>/dev/null && systemctl is-active --quiet "$svc_clean" 2>/dev/null; then
             SERVICE_STATUS_ITEMS+=("${C_OK}●${RST} ${svc_clean^}")
         elif [[ "$svc_clean" == "docker" ]] && command -v docker &>/dev/null; then
             if docker info &>/dev/null; then
                 CONTAINERS_RUNNING=$(docker ps -q 2>/dev/null | wc -l | tr -d ' ')
                 SERVICE_STATUS_ITEMS+=("${C_OK}●${RST} Docker (${CONTAINERS_RUNNING})")
+            fi
+        elif command -v sv &>/dev/null; then # Termux runit services
+            if sv status "$svc_clean" 2>/dev/null | grep -q "^run:"; then
+                SERVICE_STATUS_ITEMS+=("${C_OK}●${RST} ${svc_clean^}")
             fi
         fi
     done

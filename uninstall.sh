@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/env bash
+#!/usr/bin/env bash
 # ==============================================================================
 # motd-fatah Uninstaller
 # ==============================================================================
@@ -43,7 +43,7 @@ if [[ -n "$PREFIX" ]]; then
     fi
     for rc in "${PREFIX}/etc/zshrc" "${PREFIX}/etc/bash.bashrc"; do
         if [[ -f "$rc" ]]; then
-            sed -i '/motd-fatah/d' "$rc"
+            sed -i '/motd-fatah/d' "$rc" 2>/dev/null || true
         fi
     done
 fi
